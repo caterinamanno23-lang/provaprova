@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>Prenota la merenda</title>
+
+<!-- Effetto app a schermo intero quando salvata su schermata Home -->
+<meta name="theme-color" content="#078C74">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Merenda">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23078C74'/%3E%3Cstop offset='1' stop-color='%23056657'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='118' font-size='88' text-anchor='middle'%3E%F0%9F%A5%AA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23078C74'/%3E%3Cstop offset='1' stop-color='%23056657'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='118' font-size='88' text-anchor='middle'%3E%F0%9F%A5%AA%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Prenota%20la%20merenda%22%2C%22short_name%22%3A%22Merenda%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23FFF4DE%22%2C%22theme_color%22%3A%22%23078C74%22%7D">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CONFIGURAZIONE — modifica queste 3 righe prima di distribuire
+     ============================================================ */
+</style>
+<script>
+  const CONFIG = {
+    // Incolla qui l'URL della web app di Apps Script (vedi istruzioni)
+    SHEETS_URL: "https://script.google.com/macros/s/AKfycbzpH3bJDskozOVFK9Q8OdBLh5wpIDP4nz31pUxQU-sYt9JY7La_MX8enkh2fy3qwigp-g/exec",
+    // Deve combaciare con API_KEY nello script di Apps Script
+    API_KEY: "1982",
+    // PIN per accedere alla vista riservata allo staff
+    STAFF_PIN: "1982"
+  };
+</script>
+<style>
+  :root {
+    --bg: #FFF4DE;
+    --panel: #FFFFFF;
+    --ink: #201A14;
+    --ink-soft: #7A6A57;
+    --primary: #078C74;
+    --primary-deep: #056657;
+    --yellow: #FFC93C;
+    --tomato: #F2542D;
+    --pink: #E0457B;
+    --blue: #2EA8E0;
+    --line: #FFE1B0;
+    --radius-card: 18px;
+    --radius-pill: 999px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    overscroll-behavior: none;
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+    min-height: 100%;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  h1, h2, h3, .display { font-family: 'Bricolage Grotesque', sans-serif; }
+
+  header.top {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+    color: #FFF9EC;
+    padding: 28px 24px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  header.top::after {
+    content: "";
+    position: absolute;
+    right: -50px; top: -70px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: var(--yellow);
+    opacity: 0.28;
+  }
+  header.top::before {
+    content: "";
+    position: absolute;
+    left: 20%; bottom: -90px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: var(--pink);
+    opacity: 0.18;
+  }
+
+  .top-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .top-inner h1 {
+    font-size: clamp(24px, 4vw, 32px);
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .top-inner p { margin: 4px 0 0; color: #CFF2E9; font-size: 14.5px; }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  section.menu h2 { font-size: 21px; margin: 0 0 4px; }
+  section.menu > p.hint { margin: 0 0 20px; color: var(--ink-soft); font-size: 14.5px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 520px) { .card-grid { grid-template-columns: 1fr; } }
+
+  .snack-card {
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 16px 16px 14px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .snack-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.06); }
+  .snack-card.selected {
+    border-color: var(--card-color, var(--primary));
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--card-color, var(--primary)) 30%, transparent);
+  }
+
+  .icon-circle {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin-bottom: 12px;
+    background: color-mix(in srgb, var(--card-color, var(--primary)) 20%, white);
+  }
+
+  .snack-card h3 { font-size: 16px; margin: 0 0 4px; line-height: 1.25; }
+  .snack-card .price {
+    font-size: 13.5px; font-weight: 700; color: white;
+    background: var(--card-color, var(--tomato));
+    padding: 2px 10px; border-radius: var(--radius-pill); display: inline-block;
+  }
+
+  .snack-card .check {
+    position: absolute; top: 12px; right: 12px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--line); background: white;
+  }
+  .snack-card.selected .check { background: var(--card-color, var(--primary)); border-color: var(--card-color, var(--primary)); }
+  .snack-card.selected .check::after {
+    content: ""; display: block; width: 5px; height: 9px;
+    border-right: 2px solid white; border-bottom: 2px solid white;
+    transform: rotate(45deg); margin: 2px auto 0;
+  }
+
+  .drink-row {
+    margin-top: 16px;
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .drink-info { display: flex; align-items: center; gap: 12px; }
+  .drink-info .icon-circle { margin-bottom: 0; --card-color: var(--blue); }
+  .drink-info h3 { font-size: 15px; margin: 0; }
+  .drink-info .price {
+    font-size: 12.5px; font-weight: 700; color: white;
+    background: var(--blue); padding: 2px 10px; border-radius: var(--radius-pill);
+  }
+
+  .switch {
+    position: relative; width: 46px; height: 26px;
+    border-radius: var(--radius-pill); background: var(--line);
+    cursor: pointer; flex-shrink: 0; transition: background 0.2s ease;
+  }
+  .switch.on { background: var(--blue); }
+  .switch .knob {
+    position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+    border-radius: 50%; background: white; transition: transform 0.2s ease;
+  }
+  .switch.on .knob { transform: translateX(20px); }
+
+  aside.order {
+    background: linear-gradient(160deg, var(--primary) 0%, var(--primary-deep) 100%);
+    color: #F3ECDF; border-radius: 22px; padding: 22px;
+    position: sticky; top: 20px;
+  }
+  aside.order h2 { font-size: 18px; margin: 0 0 16px; color: white; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12.5px; color: #CFF2E9; margin-bottom: 5px; font-weight: 600; }
+  .field input, .field select {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: none;
+    font-family: 'Public Sans', sans-serif; font-size: 14.5px;
+    background: rgba(255,255,255,0.94); color: var(--ink);
+  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .order-summary { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 14.5px; }
+  .order-line { display: flex; justify-content: space-between; padding: 5px 0; color: #DFF5EE; }
+  .order-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 17px; margin-top: 8px; color: white; }
+  .empty-note { color: #A9E0CE; font-size: 13.5px; padding: 8px 0; }
+
+  button.confirm {
+    width: 100%; margin-top: 16px; padding: 13px; border: none;
+    border-radius: var(--radius-pill); background: var(--yellow); color: #2A1B05;
+    font-family: 'Public Sans', sans-serif; font-weight: 700; font-size: 15px;
+    cursor: pointer; transition: filter 0.15s ease;
+  }
+  button.confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.confirm:not(:disabled):hover { filter: brightness(1.05); }
+
+  .confirm-flash { text-align: center; padding: 10px; font-size: 14px; color: #FFEFC2; display: none; }
+  .confirm-flash.show { display: block; }
+
+  footer.staff-entry {
+    max-width: 1080px; margin: 0 auto; padding: 0 24px 30px;
+    text-align: center;
+  }
+  footer.staff-entry a {
+    color: var(--ink-soft); font-size: 12.5px; text-decoration: none;
+    opacity: 0.55; cursor: pointer;
+  }
+  footer.staff-entry a:hover { opacity: 1; text-decoration: underline; }
+
+  /* Report (staff) view */
+  .staff-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+  }
+  .staff-header h2 { margin: 0; font-size: 21px; }
+  button.exit-staff {
+    background: none; border: 1.5px solid var(--line); color: var(--ink-soft);
+    padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13.5px;
+    font-weight: 600; cursor: pointer;
+  }
+  button.exit-staff:hover { border-color: var(--ink-soft); }
+
+  .report-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .report-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  input.filter {
+    padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--line);
+    background: white; font-family: 'Public Sans', sans-serif; font-size: 14px; color: var(--ink);
+  }
+  button.download {
+    background: white; color: var(--primary); border: 1.5px solid var(--primary);
+    padding: 10px 18px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  button.download:hover { background: var(--primary); color: white; }
+  button.refresh {
+    background: var(--primary); color: white; border: none;
+    padding: 10px 18px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  button.refresh:hover { filter: brightness(1.1); }
+
+  .table-wrap { background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { background: #FFEAC0; }
+  th { text-align: left; padding: 12px 14px; font-weight: 700; color: var(--ink); font-size: 12.5px; }
+  td { padding: 11px 14px; border-top: 1px solid var(--line); color: var(--ink); }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--blue); color: white; font-size: 12px; font-weight: 700; }
+  .stat-row { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 14px 18px; min-width: 130px; }
+  .stat .num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 700; color: var(--primary); }
+  .stat .label { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); }
+  .empty-state .emoji { font-size: 34px; display: block; margin-bottom: 10px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--primary-deep); color: white; padding: 12px 20px; border-radius: var(--radius-pill);
+    font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 60;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(20, 15, 8, 0.5);
+    z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 20px; padding: 26px; max-width: 340px; width: 100%; }
+  .modal h2 { margin: 0 0 8px; font-size: 19px; }
+  .modal p { font-size: 14px; color: var(--ink-soft); line-height: 1.5; margin: 0 0 14px; }
+  .modal input {
+    width: 100%; padding: 12px 13px; border-radius: 10px; border: 1.5px solid var(--line);
+    font-size: 22px; letter-spacing: 6px; text-align: center; margin-bottom: 14px;
+    font-family: 'Public Sans', sans-serif;
+  }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-actions button {
+    padding: 10px 18px; border-radius: var(--radius-pill); border: none;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .modal-actions .go { background: var(--primary); color: white; }
+  .modal-actions .cancel { background: #F1E9D8; color: var(--ink); }
+
+  .loading-inline { text-align: center; padding: 40px; color: var(--ink-soft); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <h1>Prenota la merenda</h1>
+    <p>Scegli, prenota, ritira alla ricreazione</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ORDER VIEW (pubblica, per gli studenti) -->
+  <div id="view-order" class="view active">
+    <div class="layout">
+      <section class="menu">
+        <h2>Il menu di oggi</h2>
+        <p class="hint">Tutti i prodotti costano €1,00. Scegli uno snack e, se vuoi, aggiungi la bevanda.</p>
+        <div class="card-grid" id="snack-grid"></div>
+        <div class="drink-row" id="drink-row">
+          <div class="drink-info">
+            <span class="icon-circle">🧃</span>
+            <div>
+              <h3>Succo di frutta</h3>
+              <span class="price">€1,00</span>
+            </div>
+          </div>
+          <div class="switch" id="drink-switch"><div class="knob"></div></div>
+        </div>
+      </section>
+
+      <aside class="order">
+        <h2>La tua prenotazione</h2>
+        <div class="field">
+          <label for="in-nome">Nome</label>
+          <input id="in-nome" type="text" placeholder="Es. Giulia" autocomplete="off">
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label for="in-cognome">Cognome</label>
+            <input id="in-cognome" type="text" placeholder="Es. Rossi" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="in-classe">Classe</label>
+            <input id="in-classe" type="text" placeholder="Es. 3B" autocomplete="off">
+          </div>
+        </div>
+        <div class="field">
+          <label for="in-giorno">Giorno di ritiro</label>
+          <input id="in-giorno" type="date">
+        </div>
+
+        <div class="order-summary" id="order-summary">
+          <div class="empty-note">Nessuno snack selezionato</div>
+        </div>
+
+        <button class="confirm" id="btn-confirm" disabled>Conferma prenotazione</button>
+        <div class="confirm-flash" id="confirm-flash">✓ Prenotazione registrata</div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- REPORT VIEW (riservata, dietro PIN) -->
+  <div id="view-report" class="view">
+    <div class="staff-header">
+      <h2>Prenotazioni registrate</h2>
+      <button class="exit-staff" id="btn-exit-staff">← Torna alla prenotazione</button>
+    </div>
+    <div class="stat-row" id="stat-row"></div>
+    <div class="report-toolbar">
+      <input class="filter" type="date" id="filter-date">
+      <div class="report-actions">
+        <button class="refresh" id="btn-refresh">Aggiorna</button>
+        <button class="download" id="btn-download">Esporta CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div id="report-loading" class="loading-inline">Caricamento prenotazioni…</div>
+      <table id="report-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Giorno</th><th>Studente</th><th>Classe</th><th>Snack</th><th>Bevanda</th><th>Totale</th>
+          </tr>
+        </thead>
+        <tbody id="report-body"></tbody>
+      </table>
+      <div id="report-empty" class="empty-state" style="display:none;">
+        <span class="emoji">📋</span>
+        Nessuna prenotazione trovata.
+      </div>
+      <div id="report-error" class="empty-state" style="display:none;">
+        <span class="emoji">⚠️</span>
+        Impossibile leggere i dati dal foglio Google. Controlla la configurazione.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="staff-entry">
+  <a id="link-staff">Area riservata staff</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="pin-overlay">
+  <div class="modal">
+    <h2>Area staff</h2>
+    <p>Inserisci il PIN per accedere alle prenotazioni.</p>
+    <input type="password" inputmode="numeric" maxlength="8" id="pin-input" placeholder="••••">
+    <div class="modal-actions">
+      <button class="cancel" id="pin-cancel">Annulla</button>
+      <button class="go" id="pin-go">Entra</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SNACKS = [
+    { id: 'panino', name: 'Panino con crudo e stracciatella', price: 1.00, emoji: '🥖', color: 'var(--tomato)' },
+    { id: 'focaccia', name: 'Focaccia con verdure grigliate', price: 1.00, emoji: '🫓', color: '#5FB84D' },
+    { id: 'pizzetta', name: 'Pizzetta margherita', price: 1.00, emoji: '🍕', color: 'var(--pink)' },
+    { id: 'croissant', name: 'Croissant integrale con marmellata', price: 1.00, emoji: '🥐', color: 'var(--yellow)' },
+    { id: 'barretta', name: 'Barretta ai cereali', price: 1.00, emoji: '🌾', color: '#8E5CD9' },
+  ];
+  const DRINK = { name: 'Succo di frutta', price: 1.00 };
+
+  let selectedSnackId = null;
+  let drinkOn = false;
+  let latestBookings = [];
+
+  const grid = document.getElementById('snack-grid');
+  SNACKS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'snack-card';
+    card.dataset.id = s.id;
+    card.style.setProperty('--card-color', s.color);
+    card.innerHTML = `
+      <span class="check"></span>
+      <span class="icon-circle">${s.emoji}</span>
+      <h3>${s.name}</h3>
+      <span class="price">€${s.price.toFixed(2).replace('.', ',')}</span>
+    `;
+    card.addEventListener('click', () => {
+      selectedSnackId = s.id;
+      document.querySelectorAll('.snack-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      updateSummary();
+    });
+    grid.appendChild(card);
+  });
+
+  const drinkSwitch = document.getElementById('drink-switch');
+  drinkSwitch.addEventListener('click', () => {
+    drinkOn = !drinkOn;
+    drinkSwitch.classList.toggle('on', drinkOn);
+    updateSummary();
+  });
+
+  const summaryEl = document.getElementById('order-summary');
+  const confirmBtn = document.getElementById('btn-confirm');
+  const nomeEl = document.getElementById('in-nome');
+  const cognomeEl = document.getElementById('in-cognome');
+  const classeEl = document.getElementById('in-classe');
+  const giornoEl = document.getElementById('in-giorno');
+
+  (function setDefaultDate(){
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    giornoEl.value = d.toISOString().slice(0,10);
+  })();
+
+  function updateSummary() {
+    const snack = SNACKS.find(s => s.id === selectedSnackId);
+    if (!snack) {
+      summaryEl.innerHTML = '<div class="empty-note">Nessuno snack selezionato</div>';
+      confirmBtn.disabled = true;
+      return;
+    }
+    let total = snack.price + (drinkOn ? DRINK.price : 0);
+    let html = `<div class="order-line"><span>${snack.name}</span><span>€${snack.price.toFixed(2).replace('.', ',')}</span></div>`;
+    if (drinkOn) {
+      html += `<div class="order-line"><span>${DRINK.name}</span><span>€${DRINK.price.toFixed(2).replace('.', ',')}</span></div>`;
+    }
+    html += `<div class="order-total"><span>Totale</span><span>€${total.toFixed(2).replace('.', ',')}</span></div>`;
+    summaryEl.innerHTML = html;
+    confirmBtn.disabled = false;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  confirmBtn.addEventListener('click', async () => {
+    const snack = SNACKS.find(s => s.id === selectedSnackId);
+    if (!snack) return;
+    const nome = nomeEl.value.trim();
+    const cognome = cognomeEl.value.trim();
+    const classe = classeEl.value.trim();
+    const giorno = giornoEl.value;
+    if (!nome || !cognome || !classe || !giorno) {
+      showToast('Compila nome, cognome, classe e giorno');
+      return;
+    }
+    if (!CONFIG.SHEETS_URL || CONFIG.SHEETS_URL.startsWith('INCOLLA')) {
+      showToast('App non configurata: manca il collegamento a Google Sheets');
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Invio in corso...';
+
+    const total = snack.price + (drinkOn ? DRINK.price : 0);
+    const booking = {
+      key: CONFIG.API_KEY,
+      giorno, nome, cognome, classe,
+      snackName: snack.name,
+      snackPrice: snack.price,
+      bevanda: drinkOn,
+      bevandaNome: drinkOn ? DRINK.name : '',
+      bevandaPrezzo: drinkOn ? DRINK.price : 0,
+      totale: total
+    };
+
+    try {
+      const res = await fetch(CONFIG.SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(booking)
+      });
+      const data = await res.json();
+      if (!data || data.status !== 'ok') throw new Error('risposta non valida');
+
+      document.getElementById('confirm-flash').classList.add('show');
+      setTimeout(() => document.getElementById('confirm-flash').classList.remove('show'), 2400);
+      showToast('Prenotazione registrata per il ' + formatDate(giorno));
+      selectedSnackId = null;
+      drinkOn = false;
+      drinkSwitch.classList.remove('on');
+      document.querySelectorAll('.snack-card').forEach(c => c.classList.remove('selected'));
+      nomeEl.value = ''; cognomeEl.value = ''; classeEl.value = '';
+      updateSummary();
+    } catch (e) {
+      showToast('Errore di invio: controlla la connessione e riprova');
+    }
+    confirmBtn.textContent = 'Conferma prenotazione';
+    confirmBtn.disabled = false;
+  });
+
+  // Staff area
+  const viewOrder = document.getElementById('view-order');
+  const viewReport = document.getElementById('view-report');
+  const pinOverlay = document.getElementById('pin-overlay');
+  const pinInput = document.getElementById('pin-input');
+
+  document.getElementById('link-staff').addEventListener('click', () => {
+    pinInput.value = '';
+    pinOverlay.classList.add('show');
+    setTimeout(() => pinInput.focus(), 50);
+  });
+  document.getElementById('pin-cancel').addEventListener('click', () => pinOverlay.classList.remove('show'));
+  pinOverlay.addEventListener('click', (e) => { if (e.target === pinOverlay) pinOverlay.classList.remove('show'); });
+  pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptPin(); });
+  document.getElementById('pin-go').addEventListener('click', attemptPin);
+
+  function attemptPin() {
+    if (pinInput.value === CONFIG.STAFF_PIN) {
+      pinOverlay.classList.remove('show');
+      enterStaffView();
+    } else {
+      showToast('PIN errato');
+    }
+  }
+
+  document.getElementById('btn-exit-staff').addEventListener('click', () => {
+    viewReport.classList.remove('active');
+    viewOrder.classList.add('active');
+  });
+
+  function enterStaffView() {
+    viewOrder.classList.remove('active');
+    viewReport.classList.add('active');
+    loadReport();
+  }
+
+  document.getElementById('btn-refresh').addEventListener('click', loadReport);
+  document.getElementById('filter-date').addEventListener('change', () => renderReport(latestBookings));
+
+  async function loadReport() {
+    const loading = document.getElementById('report-loading');
+    const table = document.getElementById('report-table');
+    const errorBox = document.getElementById('report-error');
+    const emptyBox = document.getElementById('report-empty');
+    loading.style.display = 'block';
+    table.style.display = 'none';
+    errorBox.style.display = 'none';
+    emptyBox.style.display = 'none';
+
+    if (!CONFIG.SHEETS_URL || CONFIG.SHEETS_URL.startsWith('INCOLLA')) {
+      loading.style.display = 'none';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    try {
+      const url = CONFIG.SHEETS_URL + '?action=list&key=' + encodeURIComponent(CONFIG.API_KEY);
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.rows)) throw new Error('formato inatteso');
+      latestBookings = data.rows;
+      loading.style.display = 'none';
+      table.style.display = 'table';
+      renderReport(latestBookings);
+    } catch (e) {
+      loading.style.display = 'none';
+      errorBox.style.display = 'block';
+    }
+  }
+
+  function renderReport(rows) {
+    const filterVal = document.getElementById('filter-date').value;
+    const filtered = filterVal ? rows.filter(b => b.giorno === filterVal) : rows.slice();
+    filtered.sort((a, b) => (a.giorno < b.giorno ? 1 : -1));
+
+    const totalCount = filtered.length;
+    const totalRevenue = filtered.reduce((sum, b) => sum + Number(b.totale || 0), 0);
+    const drinkCount = filtered.filter(b => b.bevanda === true || b.bevanda === 'TRUE' || b.bevanda === 'true').length;
+    document.getElementById('stat-row').innerHTML = `
+      <div class="stat"><div class="num">${totalCount}</div><div class="label">Prenotazioni</div></div>
+      <div class="stat"><div class="num">€${totalRevenue.toFixed(2).replace('.', ',')}</div><div class="label">Totale incasso</div></div>
+      <div class="stat"><div class="num">${drinkCount}</div><div class="label">Con bevanda</div></div>
+    `;
+
+    const body = document.getElementById('report-body');
+    const emptyBox = document.getElementById('report-empty');
+    const table = document.getElementById('report-table');
+    if (filtered.length === 0) {
+      table.style.display = 'none';
+      emptyBox.style.display = 'block';
+      return;
+    }
+    emptyBox.style.display = 'none';
+    table.style.display = 'table';
+    body.innerHTML = filtered.map(b => `
+      <tr>
+        <td>${formatDate(b.giorno)}</td>
+        <td>${escapeHtml(b.nome)} ${escapeHtml(b.cognome)}</td>
+        <td>${escapeHtml(b.classe)}</td>
+        <td>${escapeHtml(b.snackName)}</td>
+        <td>${(b.bevanda === true || b.bevanda === 'TRUE' || b.bevanda === 'true') ? '<span class="badge">Sì</span>' : '—'}</td>
+        <td>€${Number(b.totale || 0).toFixed(2).replace('.', ',')}</td>
+      </tr>
+    `).join('');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const parts = String(iso).slice(0,10).split('-');
+    if (parts.length !== 3) return iso;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  document.getElementById('btn-download').addEventListener('click', () => {
+    const filterVal = document.getElementById('filter-date').value;
+    const filtered = filterVal ? latestBookings.filter(b => b.giorno === filterVal) : latestBookings.slice();
+    if (filtered.length === 0) {
+      showToast('Nessuna prenotazione da esportare');
+      return;
+    }
+    const headers = ['Giorno', 'Nome', 'Cognome', 'Classe', 'Snack', 'Bevanda', 'Totale'];
+    const rows = filtered.map(b => [
+      b.giorno, b.nome, b.cognome, b.classe, b.snackName,
+      (b.bevanda === true || b.bevanda === 'TRUE' || b.bevanda === 'true') ? b.bevandaNome : '',
+      Number(b.totale || 0).toFixed(2)
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prenotazioni_merenda_${filterVal || 'tutte'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSV esportato');
+  });
+</script>
+
+</body>
+</html>
